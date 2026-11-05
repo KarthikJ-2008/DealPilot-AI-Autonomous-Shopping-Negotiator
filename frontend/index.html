@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DealPilot AI — Autonomous Shopping Negotiator</title>
+  
+  <!-- Google Fonts: Inter, Plus Jakarta Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  
+  <!-- AG Grid Community CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/styles/ag-grid.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/styles/ag-theme-alpine.css">
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/dist/ag-grid-community.min.js"></script>
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- External Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Ambient Background Lighting Glows -->
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-top-right"></div>
+  <div class="ambient-glow glow-center"></div>
+
+  <!-- =====================================================================
+       SIDEBAR NAVIGATION
+       ===================================================================== -->
+  <aside class="app-sidebar" id="appSidebar">
+    <div class="brand-header">
+      <div class="brand-icon">
+        <i class="fa-solid fa-bolt"></i>
+      </div>
+      <div>
+        <div class="brand-title">
+          DealPilot <span class="brand-badge">AI 2.4</span>
+        </div>
+        <div class="brand-subtext">Autonomous Negotiator</div>
+      </div>
+    </div>
+
+    <ul class="sidebar-menu">
+      <div class="menu-heading">Negotiator Core</div>
+      <li class="nav-item active" data-view="dashboard">
+        <i class="fa-solid fa-compass"></i>
+        <span>Dashboard</span>
+      </li>
+      <li class="nav-item" data-view="search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>Find Products</span>
+      </li>
+      <li class="nav-item" data-view="comparison">
+        <i class="fa-solid fa-table-columns"></i>
+        <span>Comparison Grid</span>
+      </li>
+      <li class="nav-item" data-view="negotiation">
+        <i class="fa-solid fa-comments-dollar"></i>
+        <span>AI Negotiations</span>
+        <span class="nav-counter" id="activeNegotiationBadge">1 Active</span>
+      </li>
+      <li class="nav-item" data-view="recommendation">
+        <i class="fa-solid fa-award"></i>
+        <span>Best Deal</span>
+      </li>
+
+      <div class="menu-heading">Control & Safety</div>
+      <li class="nav-item" data-view="guardrails">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Spending Rules</span>
+      </li>
+      <li class="nav-item" data-view="checkout">
+        <i class="fa-brands fa-paypal"></i>
+        <span>PayPal Checkout</span>
+      </li>
+      <li class="nav-item" data-view="analytics">
+        <i class="fa-solid fa-chart-pie"></i>
+        <span>Analytics</span>
+      </li>
+      <li class="nav-item" onclick="openNotificationsModal()">
+        <i class="fa-regular fa-bell"></i>
+        <span>Alert Feed</span>
+        <span class="nav-counter" id="unreadNotifCount">3</span>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="api-status-badge">
+        <div class="pulse-dot" id="apiStatusDot"></div>
+        <div>
+          <div class="api-status-label" id="apiStatusLabel">Connecting API...</div>
+          <div class="api-status-sub" id="apiHostLabel">localhost:8000</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =====================================================================
+       MAIN WRAPPER & TOP NAVBAR
+       ===================================================================== -->
+  <main class="app-main">
+    <header class="top-navbar">
+      <div class="navbar-left">
+        <button class="mobile-menu-trigger" id="mobileMenuBtn" aria-label="Toggle Menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="nav-search-bar">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="globalSearchInput" placeholder="Quick search transactions, models, or stores...">
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="btn-icon" onclick="openNotificationsModal()" title="View Notifications">
+          <i class="fa-regular fa-bell"></i>
+          <span class="badge-indicator"></span>
+        </button>
+        <button class="btn-icon" onclick="switchView('guardrails')" title="Guardrail Status">
+          <i class="fa-solid fa-sliders"></i>
+        </button>
+
+        <div class="user-profile-widget" onclick="switchView('analytics')">
+          <div class="avatar">DP</div>
+          <div class="user-info">
+            <div class="user-name">Alex Vance</div>
+            <div class="user-plan">Enterprise Agent</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content-area">
+
+      <!-- ===================================================================
+           SCREEN 1: LANDING / DASHBOARD
+           =================================================================== -->
+      <section id="view-dashboard" class="view-screen active">
+        <!-- Hero Input Banner (Lengthened & Ambient Lighting) -->
+        <div class="hero-search-card">
+          <div class="hero-header-tags">
+            <span class="badge badge-indigo"><i class="fa-solid fa-wand-magic-sparkles"></i> Autonomous Intent Engine</span>
+            <span class="hero-version-text"><i class="fa-solid fa-bolt"></i> v2.4 Live Agent</span>
+          </div>
+          <h1 class="hero-title">What would you like to buy today?</h1>
+          <p class="hero-subtitle">
+            Input natural language shopping criteria. DealPilot discovers retail products, runs automated merchant negotiations, and surfaces verified savings.
+          </p>
+
+          <form id="heroIntentForm" onsubmit="handleHeroSubmit(event)" class="hero-search-flex">
+            <input 
+              type="text" 
+              class="main-query" 
+              id="heroQueryInput"
+              placeholder="e.g. Sony wireless headphones with noise cancellation" 
+              value="Sony WH-1000XM4 Wireless Noise-Canceling Headphones"
+              required
+            >
+            <input 
+              type="number" 
+              class="budget-query" 
+              id="heroBudgetInput"
+              placeholder="Max Budget ($)" 
+              value="280"
+              required
+            >
+            <button type="submit" class="btn btn-primary hero-btn">
+              <i class="fa-solid fa-paper-plane"></i> Launch Negotiator
+            </button>
+          </form>
+        </div>
+
+        <!-- Metric KPI Cards (Lengthened with Ambient Card Glow) -->
+        <div class="stats-grid">
+          <div class="card stat-card card-glow">
+            <div class="stat-icon-wrapper stat-icon-green">
+              <i class="fa-solid fa-piggy-bank"></i>
+            </div>
+            <div>
+              <div class="stat-val" id="kpiTotalSaved">$1,428.50</div>
+              <div class="stat-label">Total Money Saved</div>
+            </div>
+          </div>
+
+          <div class="card stat-card card-glow">
+            <div class="stat-icon-wrapper stat-icon-purple">
+              <i class="fa-solid fa-handshake"></i>
+            </div>
+            <div>
+              <div class="stat-val" id="kpiTotalNegos">48</div>
+              <div class="stat-label">Negotiations Closed</div>
+            </div>
+          </div>
+
+          <div class="card stat-card card-glow">
+            <div class="stat-icon-wrapper stat-icon-pink">
+              <i class="fa-solid fa-bag-shopping"></i>
+            </div>
+            <div>
+              <div class="stat-val" id="kpiPurchases">34</div>
+              <div class="stat-label">Verified Purchases</div>
+            </div>
+          </div>
+
+          <div class="card stat-card card-glow">
+            <div class="stat-icon-wrapper stat-icon-amber">
+              <i class="fa-solid fa-bolt-lightning"></i>
+            </div>
+            <div>
+              <div class="stat-val" id="kpiActiveNegos">2</div>
+              <div class="stat-label">Active Bots Running</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Activity Section -->
+        <div class="dashboard-split-grid">
+          <div class="card card-glow">
+            <div class="section-header">
+              <div>
+                <h3 class="card-heading">Recent Autonomous Sessions</h3>
+                <div class="section-subtitle">Real-time status of merchant inquiries</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="switchView('negotiation')">View Live Bot</button>
+            </div>
+            <div id="dashboardRecentSessionsList">
+              <!-- Dynamically Populated -->
+            </div>
+          </div>
+
+          <div class="card card-glow">
+            <div class="section-header">
+              <div>
+                <h3 class="card-heading">Spending Guardrail Overview</h3>
+                <div class="section-subtitle">Financial safety rules active</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="switchView('guardrails')">Rules</button>
+            </div>
+            
+            <div class="guardrail-preview-list">
+              <div class="metric-row">
+                <span class="metric-name">Maximum Allowed Per Purchase</span>
+                <span class="metric-val" id="dashGuardrailBudget">$300.00</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">Approval Required Above</span>
+                <span class="metric-val">$150.00</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">Allowed Merchant Whitelist</span>
+                <span class="metric-val text-success">5 Approved Stores</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">Max Automated Rounds</span>
+                <span class="metric-val">3 Iterations</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SCREEN 2: PRODUCT SEARCH
+           =================================================================== -->
+      <section id="view-search" class="view-screen">
+        <div class="section-header">
+          <div>
+            <h2>Product Discovery & Target Sourcing</h2>
+            <div class="section-subtitle">Enter specific criteria to compare across authenticated retail APIs</div>
+          </div>
+        </div>
+
+        <div class="card card-glow search-filter-card">
+          <form id="productSearchForm" onsubmit="executeProductSearch(event)">
+            <div class="search-form-grid">
+              <div class="form-group">
+                <label class="form-label">Product Name / Keywords</label>
+                <input type="text" id="searchProductName" class="form-control" placeholder="e.g. Sony WH-1000XM4" value="Sony WH-1000XM4">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Preferred Brand</label>
+                <input type="text" id="searchBrand" class="form-control" placeholder="e.g. Sony, Bose, Apple" value="Sony">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Max Budget ($ USD)</label>
+                <input type="number" id="searchMaxBudget" class="form-control" value="280">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Preferred Currency</label>
+                <select id="searchCurrency" class="form-control">
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="search-form-footer">
+              <div class="sort-select-wrapper">
+                <span class="sort-label">Sort By:</span>
+                <select id="productSortFilter" class="form-control sort-select" onchange="renderProductGrid()">
+                  <option value="lowest">Lowest Initial Price</option>
+                  <option value="rating">Highest Rating</option>
+                  <option value="value">Best Value Index</option>
+                </select>
+              </div>
+              <button type="submit" id="search-sourced-btn" class="btn btn-primary search-submit-btn">
+                <i class="fa-solid fa-magnifying-glass"></i> Search Sourced Merchants
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Product Cards Results (Lengthened & Highlighted) -->
+        <div id="productGridContainer" class="products-grid">
+          <!-- Dynamic Products Populated Here -->
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SCREEN 3: PRODUCT COMPARISON (AG Grid Community)
+           =================================================================== -->
+      <section id="view-comparison" class="view-screen">
+        <div class="section-header">
+          <div>
+            <h2>Multi-Merchant Matrix Comparison</h2>
+            <div class="section-subtitle">Real-time indexed store prices, shipping parameters, and projected savings</div>
+          </div>
+          <div class="header-action-group">
+            <button class="btn btn-secondary" onclick="exportComparisonGridCsv()">
+              <i class="fa-solid fa-file-export"></i> Export CSV
+            </button>
+            <button class="btn btn-primary" onclick="initiateNegotiationFromSelection()">
+              <i class="fa-solid fa-bolt"></i> Negotiate Selected
+            </button>
+          </div>
+        </div>
+
+        <!-- AG Grid Container (Lengthened height for better breathing space) -->
+        <div class="grid-card-container card-glow">
+          <div id="comparisonGrid" class="ag-theme-alpine comparison-grid-height"></div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SCREEN 4: AI NEGOTIATION CENTER (Core Feature)
+           =================================================================== -->
+      <section id="view-negotiation" class="view-screen">
+        <div class="section-header">
+          <div>
+            <h2>Autonomous Negotiation Center</h2>
+            <div class="section-subtitle">Real-time machine-to-merchant pricing deliberation and counteroffer protocols</div>
+          </div>
+          <div class="header-action-group">
+            <button class="btn btn-secondary" onclick="resetNegotiationSimulation()">
+              <i class="fa-solid fa-rotate-left"></i> Reset Demo
+            </button>
+            <button class="btn btn-primary" id="btnNextRound" onclick="simulateNextNegotiationStep()">
+              <i class="fa-solid fa-forward-step"></i> Trigger Next Bot Step
+            </button>
+          </div>
+        </div>
+
+        <!-- Timeline Steps (Lengthened Spacing) -->
+        <div class="card timeline-card card-glow">
+          <div class="timeline-bar-track"></div>
+          <div class="timeline-steps-container">
+            <div class="timeline-step" id="step-1">
+              <div class="timeline-dot active">1</div>
+              <div class="timeline-step-title active">Product Match</div>
+            </div>
+            <div class="timeline-step" id="step-2">
+              <div class="timeline-dot">2</div>
+              <div class="timeline-step-title">Strategy Set</div>
+            </div>
+            <div class="timeline-step" id="step-3">
+              <div class="timeline-dot">3</div>
+              <div class="timeline-step-title">Initial Offer</div>
+            </div>
+            <div class="timeline-step" id="step-4">
+              <div class="timeline-dot">4</div>
+              <div class="timeline-step-title">Counteroffer</div>
+            </div>
+            <div class="timeline-step" id="step-5">
+              <div class="timeline-dot" id="timelineStep5Dot">5</div>
+              <div class="timeline-step-title" id="timelineStep5Text">Accepted & Locked</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="negotiation-panel">
+          <!-- Negotiation Chat Simulator (Lengthened & Lightened Console) -->
+          <div class="chat-console card-glow">
+            <div class="chat-console-header">
+              <div class="session-info">
+                <div class="live-indicator-dot"></div>
+                <div class="session-id-text">Session #NEG-8092 — <span id="sessionMerchantName">ElectroDirect Store</span></div>
+              </div>
+              <div class="ai-agent-pulse-status">
+                <i class="fa-solid fa-microchip"></i>
+                <span id="aiStatusState">AI Strategy Active</span>
+              </div>
+            </div>
+
+            <div class="chat-log" id="negotiationChatLog">
+              <!-- Logs injected by JS -->
+            </div>
+
+            <div class="chat-input-bar">
+              <input type="text" id="manualOverrideInput" class="form-control" placeholder="Provide user prompt guidance to DealPilot AI agent...">
+              <button class="btn btn-secondary chat-send-btn" onclick="sendUserPromptToAI()">
+                <i class="fa-solid fa-paper-plane"></i> Instruct
+              </button>
+            </div>
+          </div>
+
+          <!-- Negotiation Sidebar Metrics (Lengthened Card with Soft Lighting) -->
+          <div class="negotiation-metrics-column">
+            <div class="card card-glow metrics-summary-card">
+              <h3 class="metrics-heading">Deal Analytics</h3>
+              
+              <div class="metric-row">
+                <span class="metric-name">Product</span>
+                <span class="metric-val product-name-val" id="negoProductTitle">Sony WH-1000XM4</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">Original Listed Price</span>
+                <span class="metric-val" id="negoOriginalPrice">$278.00</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">Target Budget</span>
+                <span class="metric-val" id="negoTargetPrice">$230.00</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">Current Offer</span>
+                <span class="metric-val text-warning" id="negoCurrentOffer">$245.00</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">Guaranteed Savings</span>
+                <span class="metric-val text-success" id="negoSavings">$33.00 (11.8%)</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">Negotiation Round</span>
+                <span class="metric-val" id="negoRoundCounter">Round 2 / 3</span>
+              </div>
+
+              <div class="review-deal-wrapper">
+                <button class="btn btn-primary btn-block" onclick="switchView('recommendation')">
+                  <i class="fa-solid fa-arrow-right"></i> Review Recommended Deal
+                </button>
+              </div>
+            </div>
+
+            <div class="card card-glow strategy-note-card">
+              <div class="strategy-badge-label">Engine Strategy</div>
+              <p class="strategy-description">
+                Using dynamic competitor matching against SoundHut ($259.00) to demand retail margin concessions.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SCREEN 5: BEST DEAL RECOMMENDATION
+           =================================================================== -->
+      <section id="view-recommendation" class="view-screen">
+        <div class="section-header">
+          <div>
+            <h2>AI Recommendation Verdict</h2>
+            <div class="section-subtitle">Optimal deal surfaced through price, delivery speed, and merchant trust verification</div>
+          </div>
+        </div>
+
+        <div class="deal-hero-card card-glow">
+          <div class="deal-grid">
+            <div class="deal-details-side">
+              <div class="rec-tags-row">
+                <span class="badge badge-success"><i class="fa-solid fa-shield-check"></i> Highest Confidence Score (98.4%)</span>
+                <span class="badge badge-indigo">Policy Compliant</span>
+              </div>
+
+              <h1 class="rec-main-title" id="recTitle">Sony WH-1000XM4 Noise-Canceling Wireless</h1>
+              <div class="rec-sub-info">
+                Merchant: <strong class="text-white" id="recMerchant">ElectroDirect Official</strong> &bull; Free 2-Day Air Express &bull; Full Manufacturer Warranty
+              </div>
+
+              <!-- AI Rationale Box (Lighter Glassmorphic Container) -->
+              <div class="ai-rationale-box">
+                <div class="rationale-header">
+                  <i class="fa-solid fa-brain"></i> DealPilot Algorithmic Rationale:
+                </div>
+                <p class="rationale-text" id="recRationale">
+                  "This offer represents an unbeatable balance. DealPilot successfully drove ElectroDirect down from $278.00 to $235.00 via bundled shipping waiver. Merchant is fully verified, and the negotiated price stays $45.00 below your $280.00 ceiling."
+                </p>
+              </div>
+
+              <div class="rec-actions-group">
+                <button class="btn btn-primary rec-approve-btn" onclick="approveAndProceedToCheckout()">
+                  <i class="fa-solid fa-check"></i> Approve & Proceed to Checkout
+                </button>
+                <button class="btn btn-secondary" onclick="switchView('comparison')">
+                  <i class="fa-solid fa-list"></i> Compare Alternative Offers
+                </button>
+                <button class="btn btn-danger" onclick="rejectCurrentOffer()">
+                  <i class="fa-solid fa-xmark"></i> Reject Offer
+                </button>
+              </div>
+            </div>
+
+            <!-- Price Breakdown Box (Lengthened Card with Ambient Glow) -->
+            <div class="card price-summary-card card-glow">
+              <div class="price-type-label">Original Listed</div>
+              <div class="orig-price-strike" id="recOriginalPrice">$278.00</div>
+              
+              <div class="negotiated-badge-label">Negotiated Final</div>
+              <div class="final-price-glow" id="recFinalPrice">$235.00</div>
+              
+              <div class="price-breakdown-rows">
+                <div class="metric-row">
+                  <span class="metric-name">Direct Savings</span>
+                  <span class="metric-val text-success" id="recSavings">$43.00 (15.5%)</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-name">Spending Cap Status</span>
+                  <span class="metric-val text-success">Compliant (under $280)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SCREEN 6: SPENDING GUARDRAILS
+           =================================================================== -->
+      <section id="view-guardrails" class="view-screen">
+        <div class="section-header">
+          <div>
+            <h2>Spending Guardrails & Safety Parameters</h2>
+            <div class="section-subtitle">Configure strict hard-caps and merchant whitelisting before any agent checkouts</div>
+          </div>
+          <button class="btn btn-primary" onclick="savePolicySettings()">
+            <i class="fa-solid fa-floppy-disk"></i> Save Policies
+          </button>
+        </div>
+
+        <div class="guardrails-grid">
+          <div class="card card-glow guardrails-form-card">
+            <h3 class="card-heading-padded">Automated Purchase Controls</h3>
+            
+            <div class="form-group">
+              <label class="form-label">Absolute Maximum Purchase Budget ($ USD)</label>
+              <input type="number" id="policyMaxBudget" class="form-control" value="300">
+              <small class="form-help-text">DealPilot will reject any offer higher than this ceiling regardless of discounts.</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Require Manual Approval Threshold ($ USD)</label>
+              <input type="number" id="policyApprovalThreshold" class="form-control" value="150">
+              <small class="form-help-text">Any single transaction above this requires a biometric/click confirmation.</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Max Negotiation Rounds</label>
+              <select id="policyMaxRounds" class="form-control">
+                <option value="2">2 Rounds (Fastest)</option>
+                <option value="3" selected>3 Rounds (Balanced)</option>
+                <option value="5">5 Rounds (Aggressive)</option>
+              </select>
+            </div>
+
+            <div class="form-group whitelist-group">
+              <label class="form-label">Approved Merchant Whitelist</label>
+              <div class="whitelist-tags-container" id="whitelistTagContainer">
+                <span class="badge badge-indigo">Amazon Retail <i class="fa-solid fa-xmark tag-close" onclick="removeWhitelist('Amazon Retail')"></i></span>
+                <span class="badge badge-indigo">ElectroDirect <i class="fa-solid fa-xmark tag-close" onclick="removeWhitelist('ElectroDirect')"></i></span>
+                <span class="badge badge-indigo">SoundHut <i class="fa-solid fa-xmark tag-close" onclick="removeWhitelist('SoundHut')"></i></span>
+                <span class="badge badge-indigo">BestBuy <i class="fa-solid fa-xmark tag-close" onclick="removeWhitelist('BestBuy')"></i></span>
+                <span class="badge badge-indigo">B&H Photo <i class="fa-solid fa-xmark tag-close" onclick="removeWhitelist('B&H Photo')"></i></span>
+              </div>
+              <div class="whitelist-add-row">
+                <input type="text" id="newWhitelistInput" class="form-control add-store-input" placeholder="Add verified store domain...">
+                <button type="button" class="btn btn-secondary" onclick="addWhitelistMerchant()">Add Store</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Policy Visual Indicator (Lengthened with Glow) -->
+          <div class="card card-glow policy-status-card">
+            <div>
+              <h3 class="card-heading-padded">Active Safety Status</h3>
+              <div class="safety-armed-banner">
+                <div class="armed-title"><i class="fa-solid fa-shield-check"></i> System Armed</div>
+                <div class="armed-subtitle">All autonomous transactions strictly bounded to sandbox limits.</div>
+              </div>
+
+              <div class="metric-row">
+                <span class="metric-name">Unauthorized Store Lock</span>
+                <span class="metric-val text-success">ENABLED</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">Zero-Secret Security</span>
+                <span class="metric-val text-success">ACTIVE</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">Enforce PayPal Auth</span>
+                <span class="metric-val text-success">YES</span>
+              </div>
+            </div>
+
+            <div class="policy-footer-note">
+              Policies automatically synchronised with local secure store and backend REST endpoint <code>/api/policies</code>.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SCREEN 7: PAYPAL CHECKOUT (Backend SDK Order Flow)
+           =================================================================== -->
+      <section id="view-checkout" class="view-screen">
+        <div class="section-header">
+          <div>
+            <h2>Secure Settlement & Order Authorization</h2>
+            <div class="section-subtitle">Zero client credentials stored. Executed via PayPal Sandbox server-side capture tokens</div>
+          </div>
+        </div>
+
+        <div class="checkout-wrapper">
+          <div class="card checkout-summary-box card-glow">
+            <div class="checkout-product-header">
+              <div>
+                <span class="badge badge-success mb-2"><i class="fa-solid fa-lock"></i> Deal Approved by User</span>
+                <h2 class="checkout-title" id="checkoutProductTitle">Sony WH-1000XM4 Wireless Noise-Canceling</h2>
+                <div class="checkout-merchant" id="checkoutMerchantTitle">Merchant: ElectroDirect Official</div>
+              </div>
+              <div class="checkout-orig-strike-col">
+                <div class="strike-label">Pre-Negotiation</div>
+                <div class="strike-amount" id="checkoutOrigPrice">$278.00</div>
+              </div>
+            </div>
+
+            <!-- Receipt Breakdown (Lengthened with Spacing) -->
+            <div class="receipt-breakdown">
+              <div class="metric-row">
+                <span class="metric-name">Negotiated Subtotal</span>
+                <span class="metric-val" id="checkoutSubtotal">$235.00</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">Negotiated Express Shipping Waiver</span>
+                <span class="metric-val text-success">$0.00 (FREE)</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">Estimated Sales Tax (6%)</span>
+                <span class="metric-val" id="checkoutTax">$14.10</span>
+              </div>
+              <div class="metric-row checkout-total-row">
+                <span>Total Sandbox Settlement</span>
+                <span id="checkoutTotalAmount" class="checkout-total-val">$249.10</span>
+              </div>
+            </div>
+
+            <!-- Guardrail Verification Check -->
+            <div class="checkout-limit-banner">
+              <div class="limit-banner-title"><i class="fa-solid fa-shield-halved"></i> Spending Limit Verification</div>
+              <div class="limit-banner-text">
+                Settlement total ($249.10) is beneath user safety rule ($300.00 max). Order safe to capture.
+              </div>
+            </div>
+
+            <!-- PayPal Trigger Flow -->
+            <div id="paypalActionArea">
+              <button class="paypal-btn-mock" onclick="executePayPalSandboxOrderFlow()">
+                <i class="fa-brands fa-paypal"></i> Pay with <b>PayPal</b> Sandbox
+              </button>
+              <div class="paypal-subtext">
+                <i class="fa-solid fa-fingerprint"></i> Requests order token via <code>POST /api/payments/create-order</code>
+              </div>
+            </div>
+
+            <!-- Dynamic Checkout Result Banner -->
+            <div id="checkoutSuccessBanner" class="checkout-success-box">
+              <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+              <h3 class="success-heading">PayPal Sandbox Order Captured!</h3>
+              <p class="success-meta" id="checkoutTransactionMeta">Transaction ID: TXN-8932014 &bull; Status: COMPLETED</p>
+              <button class="btn btn-primary" onclick="switchView('analytics')">View in Analytics Ledger</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SCREEN 8: ANALYTICS DASHBOARD
+           =================================================================== -->
+      <section id="view-analytics" class="view-screen">
+        <div class="section-header">
+          <div>
+            <h2>Purchasing & Negotiation Intelligence</h2>
+            <div class="section-subtitle">Aggregate data across past merchant interactions, discount percentages, and ledger history</div>
+          </div>
+          <button class="btn btn-secondary" onclick="exportTransactionLedgerCsv()">
+            <i class="fa-solid fa-download"></i> Download Audit
+          </button>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="stats-grid">
+          <div class="card stat-card card-glow">
+            <div class="stat-icon-wrapper stat-icon-green"><i class="fa-solid fa-chart-line"></i></div>
+            <div>
+              <div class="stat-val">$1,428.50</div>
+              <div class="stat-label">Cumulative Savings</div>
+            </div>
+          </div>
+          <div class="card stat-card card-glow">
+            <div class="stat-icon-wrapper stat-icon-purple"><i class="fa-solid fa-percent"></i></div>
+            <div>
+              <div class="stat-val">14.6%</div>
+              <div class="stat-label">Average Discount Won</div>
+            </div>
+          </div>
+          <div class="card stat-card card-glow">
+            <div class="stat-icon-wrapper stat-icon-amber"><i class="fa-solid fa-trophy"></i></div>
+            <div>
+              <div class="stat-val">87.5%</div>
+              <div class="stat-label">Negotiation Success Rate</div>
+            </div>
+          </div>
+          <div class="card stat-card card-glow">
+            <div class="stat-icon-wrapper stat-icon-pink"><i class="fa-solid fa-receipt"></i></div>
+            <div>
+              <div class="stat-val">34</div>
+              <div class="stat-label">Total Transactions</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart.js Visualizations (Lengthened height for chart clarity) -->
+        <div class="charts-grid">
+          <div class="card card-glow">
+            <h3 class="chart-heading">Monthly Savings vs Spending ($)</h3>
+            <div class="chart-canvas-container">
+              <canvas id="monthlySavingsChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card card-glow">
+            <h3 class="chart-heading">Negotiations Outcome by Merchant</h3>
+            <div class="chart-canvas-container">
+              <canvas id="merchantComparisonChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction History AG Grid Community -->
+        <div class="card card-glow">
+          <div class="section-header ledger-header">
+            <div>
+              <h3 class="card-heading">Autonomous Transactions Audit Ledger</h3>
+              <div class="section-subtitle">Every settlement captured through PayPal Sandbox with verifiable hash</div>
+            </div>
+          </div>
+          <div id="analyticsTransactionsGrid" class="ag-theme-alpine analytics-grid-height"></div>
+        </div>
+      </section>
+
+    </div><!-- /content-area -->
+  </main>
+
+  <!-- =====================================================================
+       SCREEN 9: NOTIFICATIONS MODAL & TOASTS
+       ===================================================================== -->
+  <div class="modal-overlay" id="notificationsModal" onclick="closeNotificationsModal(event)">
+    <div class="modal-content card-glow" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <i class="fa-regular fa-bell"></i>
+          <h3>System Notifications & Alerts</h3>
+        </div>
+        <button class="btn-icon" onclick="closeNotificationsModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal-body" id="notificationListBody">
+        <!-- Dynamically Rendered -->
+      </div>
+
+      <div class="modal-footer">
+        <span class="modal-sync-note">Syncing events from backend bus</span>
+        <button class="btn btn-secondary btn-sm" onclick="markAllNotificationsRead()">Mark all read</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- External Script -->
+  <script src="script.js"></script>
+</body>
+</html>
